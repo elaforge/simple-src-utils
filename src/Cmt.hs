@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- | Toggle between commented and uncommented code.  Works with line comments
+-- only.
 import qualified Data.Char as Char
 import qualified Data.List as List
 import Data.Monoid ((<>))

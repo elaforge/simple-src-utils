@@ -1,18 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-
-
-TODO
-    * options with --
-    * --explicit-nl adds leading space
-    - real tests, empty line handling and round trip
-    - ignore but retain trailing or leading blank lines
-    - single line works
-    - vim config uses variable for --explicit-nl
-    - configurable indentation
-    - explicit-nl for lines mode
-    - documentation
--}
+-- | Toggle between raw text and string literals.
 import qualified Data.Char as Char
 import qualified Data.List as List
 import Data.Monoid ((<>))

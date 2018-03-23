@@ -1,0 +1,15 @@
+string-literal
+  * options with --
+  * --explicit-nl adds leading space
+  - ensure single line works
+  - real tests, empty line handling and round trip
+  - ignore but retain trailing or leading blank lines
+  - vim config uses variable for --explicit-nl
+  - configurable indentation
+  - documentation
+  - I can infer the style when going to raw, but then how to go back?
+    . I could set a vim variable.
+  lines:
+    - doesn't dedent properly
+    - support --explicit-nl
+  backslash:
