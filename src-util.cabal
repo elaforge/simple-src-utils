@@ -1,0 +1,38 @@
+name: src-util
+version: 0.1
+cabal-version: >= 1.8
+build-type: Simple
+synopsis: source code editing utilities
+description:
+    Collection of small utilities to manipulate source code.
+
+category: Haskell, Development
+license: BSD3
+license-file: LICENSE
+author: Evan Laforge
+maintainer: Evan Laforge <qdunkan@gmail.com>
+stability: stable
+tested-with:
+    GHC ==7.8.4, GHC ==7.10.3, GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1
+data-files: README.md
+
+homepage: https://github.com/elaforge/src-util
+source-repository head
+    type: git
+    location: git://github.com/elaforge/src-util.git
+
+executable string-literal
+    main-is: src/StringLiteral.hs
+    build-depends:
+        base >= 3 && < 5,
+        text
+    ghc-options:
+        -Wall -fno-warn-name-shadowing
+
+executable cmt
+    main-is: src/Cmt.hs
+    build-depends:
+        base >= 3 && < 5,
+        text
+    ghc-options:
+        -Wall -fno-warn-name-shadowing
