@@ -16,7 +16,7 @@ import qualified System.Exit as Exit
 
 usage :: String
 usage =
-    "StrLit [ --wrapped --{add,remove,toggle}-{backslash,lines} ]\n\
+    "string-literal [ --wrapped --{add,remove,toggle}-{backslash,lines} ]\n\
     \\n\
     \Convert between plain text and either backslash-continued string\n\
     \literals, or list of lines style strings.  This is to work around\n\
@@ -108,7 +108,6 @@ collectNewlines = filter (not . Text.null) . snd . List.mapAccumL collect 0
         | Text.strip line == "" = (newlines+1, "")
         | otherwise = (0, Text.replicate newlines "\\n" <> line)
 
-
 {- | Invert 'addBackslashWrapped'.  Drop a leading space unless there was
     a leading \n.
 -}
@@ -130,21 +129,18 @@ removeBackslashWrapped =
         | otherwise = s
 
 addBackslash :: [Text] -> [Text]
-addBackslash = indent . map3 add1 addn end . map quote . dedent
+addBackslash = indent
+    . mapSurround ("\"", nl) ("\\", nl) ("\\", "\\n\"") ("\"", "\\n\"")
+    . map quote . dedent
     where
     nl = "\\n\\"
-    add1 s = "\"" <> s <> nl
-    addn s = "\\" <> s <> nl
-    end s = "\\" <> s <> "\\n\""
 
 removeBackslash :: [Text] -> [Text]
-removeBackslash = indent . map unquote . map3 start middle end . dedent
+removeBackslash = indent . map unquote
+    . mapStrip ("\"", nl) ("\\", nl) ("\\", "\\n\"") ("\"", "\\n\"")
+    . dedent
     where
-    start = stripPrefix "\"" . spaces . nl
-    middle = stripPrefix "\\" . spaces . nl
-    end = stripPrefix "\\" . spaces . stripSuffix "\\n\""
-    spaces = Text.dropWhile (==' ')
-    nl = stripSuffix "\\n\\"
+    nl = "\\n\\"
 
 -- * lines
 
@@ -211,6 +207,18 @@ mapAround start middle end only xs = case xs of
         [] -> []
         [x] -> [end x]
         x : xs -> middle x : go xs
+
+mapSurround :: (Text, Text) -> (Text, Text) -> (Text, Text) -> (Text, Text)
+    -> [Text] -> [Text]
+mapSurround start middle end only =
+    mapAround (uncurry surround start) (uncurry surround middle)
+        (uncurry surround end) (uncurry surround only)
+
+mapStrip :: (Text, Text) -> (Text, Text) -> (Text, Text) -> (Text, Text)
+    -> [Text] -> [Text]
+mapStrip start middle end only =
+    mapAround (uncurry strip start) (uncurry strip middle)
+        (uncurry strip end) (uncurry strip only)
 
 surround :: Text -> Text -> Text -> Text
 surround s e x = s <> x <> e

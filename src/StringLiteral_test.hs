@@ -11,6 +11,8 @@ main :: IO ()
 main = Tasty.defaultMain $ Tasty.testGroup "tests"
     [ test_backslashWrapped
     , test_backslashWrapped_roundTrip
+    , test_backslash
+    , test_backslash_roundTrip
     ]
 
 run :: Tasty.TestTree -> IO ()
@@ -51,10 +53,11 @@ test_backslashWrapped = Tasty.testGroup "backslashWrapped"
 -- it goes from reasonable input to the right haskell, and round trip will
 -- ensure it goes back to the original state.
 test_backslashWrapped_roundTrip :: Tasty.TestTree
-test_backslashWrapped_roundTrip = Tasty.testGroup "roundTrip"
-    [ backslashWrapped ["    one line"]
-    , backslashWrapped ["    two", "    lines"]
-    , backslashWrapped
+test_backslashWrapped_roundTrip = Tasty.testGroup "backslashWrapped_roundTrip" $
+    map trip
+    [ ["    one line"]
+    , ["    two", "    lines"]
+    ,
         [ "    with an"
         , "    explicit"
         , ""
@@ -62,38 +65,61 @@ test_backslashWrapped_roundTrip = Tasty.testGroup "roundTrip"
         ]
     ]
     where
-    backslashWrapped = trip
+    trip = roundTrip
         StringLiteral.addBackslashWrapped StringLiteral.removeBackslashWrapped
 
-trip :: (Stack.HasCallStack, Show a, Eq a) => (a -> b) -> (b -> a) -> a
+test_backslash :: Tasty.TestTree
+test_backslash = Tasty.testGroup "backslash"
+    [ ["    one line"] ==> ["    \"one line\\n\""]
+    , ["    two", "    lines"] ==> ["    \"two\\n\\", "    \\lines\\n\""]
+    ,
+        [ "    with an"
+        , "    explicit"
+        , ""
+        , "    newline"
+        ] ==>
+        [ "    \"with an\\n\\"
+        , "    \\explicit\\n\\"
+        , "    \\\\n\\"
+        , "    \\newline\\n\""
+        ]
+    ,
+        [ "    with"
+        , "      explicit"
+        , "    indent"
+        ] ==>
+        [ "    \"with\\n\\"
+        , "    \\  explicit\\n\\"
+        , "    \\indent\\n\""
+        ]
+    ]
+    where
+    (==>) :: Stack.HasCallStack => [Text] -> [Text] -> Tasty.TestTree
+    (==>) = test StringLiteral.addBackslash
+
+test_backslash_roundTrip :: Tasty.TestTree
+test_backslash_roundTrip = Tasty.testGroup "backslash_roundTrip" $ map trip
+    [ ["    one line"]
+    , ["    two", "    lines"]
+    ,
+        [ "    with an"
+        , "    explicit"
+        , ""
+        , "    newline"
+        ]
+    ,
+        [ "    with"
+        , "      explicit"
+        , "    indent"
+        ]
+    ]
+    where
+    trip = roundTrip StringLiteral.addBackslash StringLiteral.removeBackslash
+
+roundTrip :: (Stack.HasCallStack, Show a, Eq a) => (a -> b) -> (b -> a) -> a
     -> Tasty.TestTree
-trip f g x = HUnit.testCase (take 70 $ show x) $ g (f x) HUnit.@?= x
+roundTrip f g x = HUnit.testCase (take 70 $ show x) $ g (f x) HUnit.@?= x
 
 test :: (Stack.HasCallStack, Show a, Eq b, Show b) => (a -> b) -> a -> b
     -> Tasty.TestTree
 test f x expected = HUnit.testCase (take 70 $ show x) $ f x HUnit.@?= expected
-
--- _test_addBackslash = Text.IO.putStr $ Text.unlines $ addBackslash
---     [ "    foo"
---     , ""
---     , "    bar"
---     ]
-
--- test1 = HUnit.testCase "test1"
---     [ [1, 2, 3] `compare` [1,2] === GT
---     , [1, 2, 3] `compare` [1,2,2] === LT
---     ]
-
--- unitTests :: Tasty.TestTree
--- unitTests = Tasty.testGroup "Unit tests"
---     [ HUnit.testCase "blah" $
---       [1, 2, 3] `compare` [1,2] @?= GT
---
---     -- the following test does not hold
---     , HUnit.testCase "List comparison (same length)" $
---       [1, 2, 3] `compare` [1,2,2] @?= LT
---     ]
-
-
-(===) :: (Eq a, Show a) => a -> a -> HUnit.Assertion
-(===) = (HUnit.@?=)
