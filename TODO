@@ -1,9 +1,10 @@
 string-literal
   * options with --
   * --explicit-nl adds leading space
-  - ensure single line works
-  - real tests, empty line handling and round trip
+  + ensure single line works
+  + real tests, empty line handling and round trip
   - ignore but retain trailing or leading blank lines
+    . only when not --wrapped though
   - vim config uses variable for --explicit-nl
   - configurable indentation
   - documentation

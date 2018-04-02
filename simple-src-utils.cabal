@@ -1,4 +1,4 @@
-name: src-util
+name: simple-src-utils
 version: 0.1
 cabal-version: >= 1.8
 build-type: Simple
@@ -19,10 +19,10 @@ data-files:
     TODO
     vimrc
 
-homepage: https://github.com/elaforge/src-util
+homepage: https://github.com/elaforge/simple-src-utils
 source-repository head
     type: git
-    location: git://github.com/elaforge/src-util.git
+    location: git://github.com/elaforge/simple-src-utils.git
 
 executable string-literal
     main-is: src/StringLiteral.hs
