@@ -23,6 +23,7 @@ run = Tasty.defaultMain
 test_backslashWrapped :: Tasty.TestTree
 test_backslashWrapped = Tasty.testGroup "backslashWrapped"
     [ ["    one line"] ==> ["    \"one line\""]
+    , ["    line\"with\\junk"] ==> ["    \"line\\\"with\\\\junk\""]
     , ["    two", "    lines"] ==>
         [ "    \"two\\"
         , "    \\ lines\""
@@ -73,6 +74,7 @@ test_backslashWrapped_roundTrip = Tasty.testGroup "backslashWrapped_roundTrip" $
 test_backslash :: Tasty.TestTree
 test_backslash = Tasty.testGroup "backslash"
     [ ["    one line"] ==> ["    \"one line\\n\""]
+    , ["    line\"with\\junk"] ==> ["    \"line\\\"with\\\\junk\\n\""]
     , ["    two", "    lines"] ==> ["    \"two\\n\\", "    \\lines\\n\""]
     ,
         [ "    with an"

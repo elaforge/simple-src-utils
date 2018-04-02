@@ -92,7 +92,8 @@ inferBackslashed (line:_) = "\"" `Text.isPrefixOf` Text.stripStart line
 -}
 addBackslashWrapped :: [Text] -> [Text]
 addBackslashWrapped =
-    indent . mapAround start middle end only . collectNewlines . dedentAll
+    indent . mapAround start middle end only . collectNewlines
+    . map quote . dedentAll
     where
     start = surround "\"" "\\"
     middle = surround "\\" "\\" . leadingSpace
@@ -114,8 +115,9 @@ collectNewlines = filter (not . Text.null) . snd . List.mapAccumL collect 0
 -}
 removeBackslashWrapped :: [Text] -> [Text]
 removeBackslashWrapped =
-    indent . map stripLeadingSpace . zipPrev . concatMap addNewlines
-        . mapAround start middle end only . dedent
+    indent . map unquote
+    . map stripLeadingSpace . zipPrev . concatMap addNewlines
+    . mapAround start middle end only . dedent
     where
     addNewlines s =
         replicate (length pre) "" ++ [Text.intercalate "\\n" post]
@@ -186,10 +188,10 @@ dedentAll :: [Text] -> [Text]
 dedentAll = map (Text.dropWhile (==' ') . Text.stripEnd)
 
 quote :: Text -> Text
-quote = Text.replace "\"" "\\\""
+quote = Text.replace "\"" "\\\"" . Text.replace "\\" "\\\\"
 
 unquote :: Text -> Text
-unquote = Text.replace "\\\"" "\""
+unquote = Text.replace "\\\\" "\\" . Text.replace "\\\"" "\""
 
 -- | Apply separate transformations to start, middle, end, or only elements.
 -- If there are 2 elements, middle loses out, and if there is 1, the @only@
