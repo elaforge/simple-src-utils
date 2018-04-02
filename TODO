@@ -1,22 +1,26 @@
 string-literal
   * options with --
-  * --explicit-nl adds leading space
-  + ensure single line works
-  + real tests, empty line handling and round trip
+  * --wrapped adds leading space
+  * ensure single line works
+  * real tests, empty line handling and round trip
+  - documentation
   - ignore but retain trailing or leading blank lines
     . only when not --wrapped though
-  - vim config uses variable for --explicit-nl
-  - configurable indentation
-  - documentation
-  - I can infer the style when going to raw, but then how to go back?
-    . I could set a vim variable.
   - I might want to be able to ignore but preserve leading gunk on the first
     line, e.g. for
     ( "blah\
       \ blah"
     , ...
     )
+  - configurable indentation
+  vim:
+    - vim config uses variable for --wrapped
+    - What about variable indentation?
+      . I can infer it easily enough when stripping, but I have to store what it
+        was to go back.
+      . Same problem as inferring the style.
+    - I can infer the style when going to raw, but then how to go back?
+      . I could set a vim variable.
   lines:
-    - doesn't dedent properly
-    - support --explicit-nl
-  backslash:
+    * doesn't dedent properly
+    - support --wrapped

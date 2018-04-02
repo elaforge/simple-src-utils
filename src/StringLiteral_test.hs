@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
+import Data.Text (Text)
 import qualified GHC.Stack as Stack
 import qualified Test.Tasty as Tasty
 import qualified Test.Tasty.HUnit as HUnit
-import Data.Text (Text)
 
 import qualified StringLiteral
 
@@ -13,6 +13,8 @@ main = Tasty.defaultMain $ Tasty.testGroup "tests"
     , test_backslashWrapped_roundTrip
     , test_backslash
     , test_backslash_roundTrip
+    , test_lines
+    , test_lines_roundTrip
     ]
 
 run :: Tasty.TestTree -> IO ()
@@ -115,6 +117,62 @@ test_backslash_roundTrip = Tasty.testGroup "backslash_roundTrip" $ map trip
     ]
     where
     trip = roundTrip StringLiteral.addBackslash StringLiteral.removeBackslash
+
+test_lines :: Tasty.TestTree
+test_lines = Tasty.testGroup "lines"
+    [ ["    one line"] ==> ["    [\"one line\"]"]
+    , ["    two", "    lines"] ==>
+        [ "    [ \"two\""
+        , "    , \"lines\""
+        , "    ]"
+        ]
+    ,
+        [ "    with an"
+        , "    explicit"
+        , ""
+        , "    newline"
+        ] ==>
+        [ "    [ \"with an\""
+        , "    , \"explicit\""
+        , "    , \"\""
+        , "    , \"newline\""
+        , "    ]"
+        ]
+    ,
+        [ "    with"
+        , "      explicit"
+        , "    indent"
+        ] ==>
+        [ "    [ \"with\""
+        , "    , \"  explicit\""
+        , "    , \"indent\""
+        , "    ]"
+        ]
+    ]
+    where
+    (==>) :: Stack.HasCallStack => [Text] -> [Text] -> Tasty.TestTree
+    (==>) = test StringLiteral.addLines
+
+test_lines_roundTrip :: Tasty.TestTree
+test_lines_roundTrip = Tasty.testGroup "lines_roundTrip" $ map trip
+    [ ["    one line"]
+    , ["    two", "    lines"]
+    ,
+        [ "    with an"
+        , "    explicit"
+        , ""
+        , "    newline"
+        ]
+    ,
+        [ "    with"
+        , "      explicit"
+        , "    indent"
+        ]
+    ]
+    where
+    trip = roundTrip StringLiteral.addLines StringLiteral.removeLines
+
+-- * util
 
 roundTrip :: (Stack.HasCallStack, Show a, Eq a) => (a -> b) -> (b -> a) -> a
     -> Tasty.TestTree

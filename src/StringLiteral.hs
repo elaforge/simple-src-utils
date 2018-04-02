@@ -4,6 +4,7 @@
 module StringLiteral where
 import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified Data.List.Extra as List.Extra
 import Data.Monoid ((<>))
 import qualified Data.Text as Text
 import Data.Text (Text)
@@ -149,21 +150,25 @@ inferList [] = False
 inferList (line:_) = "[" `Text.isPrefixOf` Text.stripStart line
 
 addLines :: [Text] -> [Text]
-addLines = map3 add1 addn end . map quote . dedent
-    where
-    add1 line = indentation <> "[ \"" <> line <> "\""
-    addn line = indentation <> ", \"" <> line <> "\""
-    end line = addn line <> "\n" <> indentation <> "]"
+addLines = indent
+    . concatMap Text.lines -- handle the \n below
+    . mapSurround ("[ \"", "\"") (", \"", "\"")
+        (", \"", "\"\n]")
+        ("[\"", "\"]")
+    . map quote . dedent
 
 removeLines :: [Text] -> [Text]
-removeLines = map unquote . map3 start middle id . dropLast
+removeLines = indent . map unquote
+    . mapStrip ("[ \"", "\"") (", \"", "\"") (", \"", "\"") ("[\"", "\"]")
+    . dropLast . dedent
     where
-    remove = Text.dropWhile (==' ') . stripSuffix "\""
-    start = stripPrefix "[ \"" . remove
-    middle = stripPrefix ", \"" . remove
     -- The last line should be ']'
-    dropLast [] = []
-    dropLast xs = List.init xs
+    dropLast xs = case List.Extra.unsnoc xs of
+        Just (xs, x) | x == "]" -> xs
+        _ -> xs
+
+
+-- * util
 
 indent :: [Text] -> [Text]
 indent = map (\s -> if Text.null s then "" else indentation <> s)
@@ -185,14 +190,6 @@ quote = Text.replace "\"" "\\\""
 
 unquote :: Text -> Text
 unquote = Text.replace "\\\"" "\""
-
-map3 :: (a -> b) -> (a -> b) -> (a -> b) -> [a] -> [b]
-map3 _ _ _ [] = []
-map3 initial middle end (x:xs) = initial x : go xs
-    where
-    go [] = []
-    go [x] = [end x]
-    go (x:xs) = middle x : go xs
 
 -- | Apply separate transformations to start, middle, end, or only elements.
 -- If there are 2 elements, middle loses out, and if there is 1, the @only@
@@ -226,17 +223,9 @@ surround s e x = s <> x <> e
 strip :: HasCallStack => Text -> Text -> Text -> Text
 strip s e = stripPrefix s . stripSuffix e
 
--- surround :: (Text, Text) -> (Text, Text) -> (Text, Text) -> (Text, Text)
---     -> [Text] -> [Text]
--- surround start middle end only xs = case xs of
---     [x] -> [add only x]
---     x : xs -> add start x : go xs
---     where
---     go xs = case xs of
---         [] -> []
---         [x] -> [add end x]
---         x : xs -> add middle x : go xs
---     add (s, e) x = s <> x <> e
+-- * generic util
+
+-- TODO these are mostly from Util.Seq, I should put that on hackage too
 
 stripSuffix :: HasCallStack => Text -> Text -> Text
 stripSuffix s text =

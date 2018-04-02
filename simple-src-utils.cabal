@@ -29,7 +29,8 @@ executable string-literal
     extensions: OverloadedStrings
     build-depends:
         base >= 3 && < 5,
-        text
+        text,
+        extra
     ghc-options:
         -main-is StringLiteral -Wall -fno-warn-name-shadowing
 
@@ -42,6 +43,7 @@ test-suite test-string-literal
     build-depends:
         base >= 3 && < 5,
         text,
+        extra,
         tasty, tasty-hunit
 
 executable cmt
