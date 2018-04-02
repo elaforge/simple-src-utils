@@ -7,19 +7,17 @@ import Data.Text (Text)
 import qualified StringLiteral
 
 
-(===) :: (Eq a, Show a) => a -> a -> HUnit.Assertion
-(===) = (HUnit.@?=)
-
-run = Tasty.defaultMain
-
 main :: IO ()
 main = Tasty.defaultMain $ Tasty.testGroup "tests"
-    [ test_backslashExplicit
-    , test_roundTrip
+    [ test_backslashWrapped
+    , test_backslashWrapped_roundTrip
     ]
 
-test_backslashExplicit :: Tasty.TestTree
-test_backslashExplicit = Tasty.testGroup "backslashExplicit"
+run :: Tasty.TestTree -> IO ()
+run = Tasty.defaultMain
+
+test_backslashWrapped :: Tasty.TestTree
+test_backslashWrapped = Tasty.testGroup "backslashWrapped"
     [ ["    one line"] ==> ["    \"one line\""]
     , ["    two", "    lines"] ==>
         [ "    \"two\\"
@@ -35,22 +33,37 @@ test_backslashExplicit = Tasty.testGroup "backslashExplicit"
         , "    \\ explicit\\"
         , "    \\\\nnewline\""
         ]
+    ,
+        [ "    with"
+        , "      explicit"
+        , "    indent"
+        ] ==>
+        [ "    \"with\\"
+        , "    \\ explicit\\"
+        , "    \\ indent\""
+        ]
     ]
     where
     (==>) :: Stack.HasCallStack => [Text] -> [Text] -> Tasty.TestTree
-    (==>) = test StringLiteral.addBackslashExplicit
+    (==>) = test StringLiteral.addBackslashWrapped
 
--- I think I don't need to test removeBackslashExplicit because add ensures
+-- I think I don't need to test removeBackslashWrapped because add ensures
 -- it goes from reasonable input to the right haskell, and round trip will
 -- ensure it goes back to the original state.
-test_roundTrip :: Tasty.TestTree
-test_roundTrip = Tasty.testGroup "roundTrip"
-    [ backslashExplicit ["    one line"]
-    , backslashExplicit ["    two", "    lines"]
+test_backslashWrapped_roundTrip :: Tasty.TestTree
+test_backslashWrapped_roundTrip = Tasty.testGroup "roundTrip"
+    [ backslashWrapped ["    one line"]
+    , backslashWrapped ["    two", "    lines"]
+    , backslashWrapped
+        [ "    with an"
+        , "    explicit"
+        , ""
+        , "    newline"
+        ]
     ]
     where
-    backslashExplicit = trip
-        StringLiteral.addBackslashExplicit StringLiteral.removeBackslashExplicit
+    backslashWrapped = trip
+        StringLiteral.addBackslashWrapped StringLiteral.removeBackslashWrapped
 
 trip :: (Stack.HasCallStack, Show a, Eq a) => (a -> b) -> (b -> a) -> a
     -> Tasty.TestTree
@@ -60,17 +73,6 @@ test :: (Stack.HasCallStack, Show a, Eq b, Show b) => (a -> b) -> a -> b
     -> Tasty.TestTree
 test f x expected = HUnit.testCase (take 70 $ show x) $ f x HUnit.@?= expected
 
--- -- TODO real tests
--- _test_addBackslashExplicit = Text.unlines $ addBackslashExplicit
---     [ "this is"
---     , "raw"
---     , ""
---     , "text"
---     ]
---
--- _test_removeBackslashExplicit = Text.unlines $ removeBackslashExplicit $
---     Text.lines _test_addBackslashExplicit
---
 -- _test_addBackslash = Text.IO.putStr $ Text.unlines $ addBackslash
 --     [ "    foo"
 --     , ""
@@ -92,3 +94,6 @@ test f x expected = HUnit.testCase (take 70 $ show x) $ f x HUnit.@?= expected
 --       [1, 2, 3] `compare` [1,2,2] @?= LT
 --     ]
 
+
+(===) :: (Eq a, Show a) => a -> a -> HUnit.Assertion
+(===) = (HUnit.@?=)

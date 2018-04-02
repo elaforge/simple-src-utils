@@ -16,7 +16,7 @@ import qualified System.Exit as Exit
 
 usage :: String
 usage =
-    "StrLit [ --explicit-nl --{add,remove,toggle}-{backslash,lines} ]\n\
+    "StrLit [ --wrapped --{add,remove,toggle}-{backslash,lines} ]\n\
     \\n\
     \Convert between plain text and either backslash-continued string\n\
     \literals, or list of lines style strings.  This is to work around\n\
@@ -34,7 +34,7 @@ data Operation = Add | Remove deriving (Eq, Show)
 data Kind = Backslash | Lines deriving (Eq, Show)
 
 parseArgs :: [String] -> Maybe (Bool, Maybe Operation, Kind)
-parseArgs args = add <$> case filter (/="--explicit-nl") args of
+parseArgs args = add <$> case filter (/="--wrapped") args of
     ["--toggle-backslash"] -> Just (Nothing, Backslash)
     ["--add-backslash"] -> Just (Just Add, Backslash)
     ["--remove-backslash"] -> Just (Just Remove, Backslash)
@@ -43,22 +43,22 @@ parseArgs args = add <$> case filter (/="--explicit-nl") args of
     ["--remove-lines"] -> Just (Just Remove, Lines)
     _ -> Nothing
     where
-    add (b, c) = (explicitNl, b, c)
-    explicitNl = "--explicit-nl" `elem` args
+    add (b, c) = (wrapped, b, c)
+    wrapped = "--wrapped" `elem` args
 
 process :: (Bool, Maybe Operation, Kind) -> [Text] -> [Text]
-process (explicitNl, op, kind) = case (explicitNl, op, kind) of
+process (wrapped, op, kind) = case (wrapped, op, kind) of
     (_, Nothing, Backslash) -> \lines -> if inferBackslashed lines
-        then process (explicitNl, Just Remove, kind) lines
-        else process (explicitNl, Just Add, kind) lines
+        then process (wrapped, Just Remove, kind) lines
+        else process (wrapped, Just Add, kind) lines
     (_, Nothing, Lines) -> \lines -> if inferList lines
-        then process (explicitNl, Just Remove, kind) lines
-        else process (explicitNl, Just Add, kind) lines
+        then process (wrapped, Just Remove, kind) lines
+        else process (wrapped, Just Add, kind) lines
 
     (False, Just Add, Backslash) -> addBackslash
     (False, Just Remove,  Backslash) -> removeBackslash
-    (True, Just Add, Backslash) -> addBackslashExplicit
-    (True, Just Remove, Backslash) -> removeBackslashExplicit
+    (True, Just Add, Backslash) -> addBackslashWrapped
+    (True, Just Remove, Backslash) -> removeBackslashWrapped
     (_, Just Add, Lines) -> addLines
     (_, Just Remove, Lines) -> removeLines
 
@@ -71,9 +71,12 @@ inferBackslashed :: [Text] -> Bool
 inferBackslashed [] = False
 inferBackslashed (line:_) = "\"" `Text.isPrefixOf` Text.stripStart line
 
-{- |
+{- | Add backslashes assuming the text will be wrapped by someone else later.
+
     An extra newline becomes a leading \n.  A leading space is added if
-    there is no leading \n, except for the first line.
+    there is no leading \n, except for the first line.  Other than that,
+    leading and trailing spaces are stripped, since the assumption is that
+    this is just a list of words.
 
     > this is
     > raw
@@ -86,12 +89,14 @@ inferBackslashed (line:_) = "\"" `Text.isPrefixOf` Text.stripStart line
     > \ raw\
     > \\ntext"
 -}
-addBackslashExplicit :: [Text] -> [Text]
-addBackslashExplicit = indent . map3 add1 addn end . collectNewlines . dedent
+addBackslashWrapped :: [Text] -> [Text]
+addBackslashWrapped =
+    indent . mapAround start middle end only . collectNewlines . dedentAll
     where
-    add1 s = "\"" <> s <> "\\"
-    addn s = "\\" <> leadingSpace s <> "\\"
-    end s = "\\" <> leadingSpace s <> "\""
+    start = surround "\"" "\\"
+    middle = surround "\\" "\\" . leadingSpace
+    end = surround "\\" "\"" . leadingSpace
+    only = surround "\"" "\""
     leadingSpace s
         | "\\n" `Text.isPrefixOf` s = s
         | otherwise = " " <> s
@@ -104,20 +109,21 @@ collectNewlines = filter (not . Text.null) . snd . List.mapAccumL collect 0
         | otherwise = (0, Text.replicate newlines "\\n" <> line)
 
 
-{- Invert 'addBackslashExplicit'.  Drop a leading space unless there was
+{- | Invert 'addBackslashWrapped'.  Drop a leading space unless there was
     a leading \n.
 -}
-removeBackslashExplicit :: [Text] -> [Text]
-removeBackslashExplicit =
+removeBackslashWrapped :: [Text] -> [Text]
+removeBackslashWrapped =
     indent . map stripLeadingSpace . zipPrev . concatMap addNewlines
-        . map3 remove1 removen end . dedent
+        . mapAround start middle end only . dedent
     where
     addNewlines s =
         replicate (length pre) "" ++ [Text.intercalate "\\n" post]
         where (pre, post) = span Text.null $ Text.splitOn "\\n" s
-    remove1 = stripPrefix "\"" . stripSuffix "\\"
-    removen = stripPrefix "\\" . stripSuffix "\\"
-    end = stripPrefix "\\" . stripSuffix "\""
+    start = strip "\"" "\\"
+    middle = strip "\\" "\\"
+    end = strip "\\" "\""
+    only = strip "\"" "\""
     stripLeadingSpace (Just "", s) = s
     stripLeadingSpace (_, s)
         | ' ' : c : _ <- Text.unpack s, c /= ' ' = Text.drop 1 s
@@ -132,10 +138,10 @@ addBackslash = indent . map3 add1 addn end . map quote . dedent
     end s = "\\" <> s <> "\\n\""
 
 removeBackslash :: [Text] -> [Text]
-removeBackslash = indent . map unquote . map3 remove1 removen end . dedent
+removeBackslash = indent . map unquote . map3 start middle end . dedent
     where
-    remove1 = stripPrefix "\"" . spaces . nl
-    removen = stripPrefix "\\" . spaces . nl
+    start = stripPrefix "\"" . spaces . nl
+    middle = stripPrefix "\\" . spaces . nl
     end = stripPrefix "\\" . spaces . stripSuffix "\\n\""
     spaces = Text.dropWhile (==' ')
     nl = stripSuffix "\\n\\"
@@ -154,11 +160,11 @@ addLines = map3 add1 addn end . map quote . dedent
     end line = addn line <> "\n" <> indentation <> "]"
 
 removeLines :: [Text] -> [Text]
-removeLines = map unquote . map3 remove1 removen id . dropLast
+removeLines = map unquote . map3 start middle id . dropLast
     where
     remove = Text.dropWhile (==' ') . stripSuffix "\""
-    remove1 = stripPrefix "[ \"" . remove
-    removen = stripPrefix ", \"" . remove
+    start = stripPrefix "[ \"" . remove
+    middle = stripPrefix ", \"" . remove
     -- The last line should be ']'
     dropLast [] = []
     dropLast xs = List.init xs
@@ -175,21 +181,14 @@ dedent lines = map (Text.drop indentation) lines
             map (Text.length . Text.takeWhile Char.isSpace) $
             filter (not . Text.all Char.isSpace) lines
 
+dedentAll :: [Text] -> [Text]
+dedentAll = map (Text.dropWhile (==' ') . Text.stripEnd)
+
 quote :: Text -> Text
 quote = Text.replace "\"" "\\\""
 
 unquote :: Text -> Text
 unquote = Text.replace "\\\"" "\""
-
--- | Apply separate transformations to initial, middle, and final elements.
--- If there are 2 elements, middle loses out, and if there is 1, both
--- initial and final functions are applied.
--- map3 :: (a -> b) -> (a -> b) -> (a -> Maybe b) -> [a] -> [b]
--- map3 initial middle final xs = case xs of
---     [] -> []
---     [x] -> [initial (final x)]
---     x : xs -> initial x : go xs
---     where
 
 map3 :: (a -> b) -> (a -> b) -> (a -> b) -> [a] -> [b]
 map3 _ _ _ [] = []
@@ -198,6 +197,38 @@ map3 initial middle end (x:xs) = initial x : go xs
     go [] = []
     go [x] = [end x]
     go (x:xs) = middle x : go xs
+
+-- | Apply separate transformations to start, middle, end, or only elements.
+-- If there are 2 elements, middle loses out, and if there is 1, the @only@
+-- function is applied.
+mapAround :: (a -> b) -> (a -> b) -> (a -> b) -> (a -> b) -> [a] -> [b]
+mapAround start middle end only xs = case xs of
+    [] -> []
+    [x] -> [only x]
+    x : xs -> start x : go xs
+    where
+    go xs = case xs of
+        [] -> []
+        [x] -> [end x]
+        x : xs -> middle x : go xs
+
+surround :: Text -> Text -> Text -> Text
+surround s e x = s <> x <> e
+
+strip :: HasCallStack => Text -> Text -> Text -> Text
+strip s e = stripPrefix s . stripSuffix e
+
+-- surround :: (Text, Text) -> (Text, Text) -> (Text, Text) -> (Text, Text)
+--     -> [Text] -> [Text]
+-- surround start middle end only xs = case xs of
+--     [x] -> [add only x]
+--     x : xs -> add start x : go xs
+--     where
+--     go xs = case xs of
+--         [] -> []
+--         [x] -> [add end x]
+--         x : xs -> add middle x : go xs
+--     add (s, e) x = s <> x <> e
 
 stripSuffix :: HasCallStack => Text -> Text -> Text
 stripSuffix s text =

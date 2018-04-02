@@ -9,6 +9,12 @@ string-literal
   - documentation
   - I can infer the style when going to raw, but then how to go back?
     . I could set a vim variable.
+  - I might want to be able to ignore but preserve leading gunk on the first
+    line, e.g. for
+    ( "blah\
+      \ blah"
+    , ...
+    )
   lines:
     - doesn't dedent properly
     - support --explicit-nl
