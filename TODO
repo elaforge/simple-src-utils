@@ -4,8 +4,7 @@ string-literal
   * ensure single line works
   * real tests, empty line handling and round trip
   - documentation
-  - ignore but retain trailing or leading blank lines
-    . only when not --wrapped though
+  * ignore but retain trailing or leading blank lines
   - I might want to be able to ignore but preserve leading gunk on the first
     line, e.g. for
     ( "blah\

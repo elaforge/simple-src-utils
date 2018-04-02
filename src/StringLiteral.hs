@@ -27,7 +27,7 @@ main :: IO ()
 main = do
     let showUsage = putStr usage >> Exit.exitFailure
     args <- maybe showUsage return . parseArgs =<< Environment.getArgs
-    Text.IO.interact $ Text.unlines . process args . Text.lines
+    Text.IO.interact $ Text.unlines . focusNonEmpty (process args) . Text.lines
 
 data Operation = Add | Remove deriving (Eq, Show)
 data Kind = Backslash | Lines deriving (Eq, Show)
@@ -63,6 +63,17 @@ process (wrapped, op, kind) = case (wrapped, op, kind) of
 
 indentation :: Text
 indentation = "    "
+
+-- | Pass through leading and trailing blank lines.
+focusNonEmpty :: ([Text] -> [Text]) -> [Text] -> [Text]
+focusNonEmpty f lines = pre ++ f within ++ post
+    where (pre, within, post) = span2 (Text.null . Text.strip) lines
+
+span2 :: (a -> Bool) -> [a] -> ([a], [a], [a])
+span2 f xs = (pre, in2, post)
+    where
+    (pre, in1) = span f xs
+    (in2, post) = List.Extra.spanEnd f in1
 
 -- * backslashes
 
