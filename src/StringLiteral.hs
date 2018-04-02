@@ -27,9 +27,7 @@ main :: IO ()
 main = do
     let showUsage = putStr usage >> Exit.exitFailure
     args <- maybe showUsage return . parseArgs =<< Environment.getArgs
-    text <- Text.IO.getContents
-    -- TODO Text.interact?
-    Text.IO.putStr $ Text.unlines $ process args $ Text.lines text
+    Text.IO.interact $ Text.unlines . process args . Text.lines
 
 data Operation = Add | Remove deriving (Eq, Show)
 data Kind = Backslash | Lines deriving (Eq, Show)
