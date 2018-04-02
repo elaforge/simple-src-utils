@@ -1,6 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PatternGuards #-}
 -- | Toggle between raw text and string literals.
+module StringLiteral where
 import qualified Data.Char as Char
 import qualified Data.List as List
 import Data.Monoid ((<>))
@@ -102,22 +103,6 @@ collectNewlines = filter (not . Text.null) . snd . List.mapAccumL collect 0
         | Text.strip line == "" = (newlines+1, "")
         | otherwise = (0, Text.replicate newlines "\\n" <> line)
 
--- TODO real tests
-_test_addBackslashExplicit = Text.unlines $ addBackslashExplicit
-    [ "this is"
-    , "raw"
-    , ""
-    , "text"
-    ]
-
-_test_removeBackslashExplicit = Text.unlines $ removeBackslashExplicit $
-    Text.lines _test_addBackslashExplicit
-
-_test_addBackslash = Text.IO.putStr $ Text.unlines $ addBackslash
-    [ "    foo"
-    , ""
-    , "    bar"
-    ]
 
 {- Invert 'addBackslashExplicit'.  Drop a leading space unless there was
     a leading \n.
