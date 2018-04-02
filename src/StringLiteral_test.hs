@@ -56,17 +56,9 @@ test_backslashWrapped = Tasty.testGroup "backslashWrapped"
 -- it goes from reasonable input to the right haskell, and round trip will
 -- ensure it goes back to the original state.
 test_backslashWrapped_roundTrip :: Tasty.TestTree
-test_backslashWrapped_roundTrip = Tasty.testGroup "backslashWrapped_roundTrip" $
-    map trip
-    [ ["    one line"]
-    , ["    two", "    lines"]
-    ,
-        [ "    with an"
-        , "    explicit"
-        , ""
-        , "    newline"
-        ]
-    ]
+test_backslashWrapped_roundTrip =
+    Tasty.testGroup "backslashWrapped_roundTrip" $
+        map trip roundTripExamplesWrapped
     where
     trip = roundTrip
         StringLiteral.addBackslashWrapped StringLiteral.removeBackslashWrapped
@@ -102,21 +94,8 @@ test_backslash = Tasty.testGroup "backslash"
     (==>) = test StringLiteral.addBackslash
 
 test_backslash_roundTrip :: Tasty.TestTree
-test_backslash_roundTrip = Tasty.testGroup "backslash_roundTrip" $ map trip
-    [ ["    one line"]
-    , ["    two", "    lines"]
-    ,
-        [ "    with an"
-        , "    explicit"
-        , ""
-        , "    newline"
-        ]
-    ,
-        [ "    with"
-        , "      explicit"
-        , "    indent"
-        ]
-    ]
+test_backslash_roundTrip =
+    Tasty.testGroup "backslash_roundTrip" $ map trip roundTripExamples
     where
     trip = roundTrip StringLiteral.addBackslash StringLiteral.removeBackslash
 
@@ -156,23 +135,31 @@ test_lines = Tasty.testGroup "lines"
     (==>) = test StringLiteral.addLines
 
 test_lines_roundTrip :: Tasty.TestTree
-test_lines_roundTrip = Tasty.testGroup "lines_roundTrip" $ map trip
+test_lines_roundTrip =
+    Tasty.testGroup "lines_roundTrip" $ map trip roundTripExamples
+    where
+    trip = roundTrip StringLiteral.addLines StringLiteral.removeLines
+
+roundTripExamplesWrapped :: [[Text]]
+roundTripExamplesWrapped =
     [ ["    one line"]
     , ["    two", "    lines"]
+    , ["    line\"s", "    with\\junk"]
     ,
         [ "    with an"
         , "    explicit"
         , ""
         , "    newline"
         ]
-    ,
-        [ "    with"
+    ]
+
+roundTripExamples :: [[Text]]
+roundTripExamples = roundTripExamplesWrapped ++
+    [   [ "    with"
         , "      explicit"
         , "    indent"
         ]
     ]
-    where
-    trip = roundTrip StringLiteral.addLines StringLiteral.removeLines
 
 -- * util
 
