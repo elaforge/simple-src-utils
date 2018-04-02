@@ -11,11 +11,14 @@ string-literal
     . I could dedent by the added characters, but then I wind up with
       irregular indents.  Some people might not mind that, but I do.
   - I might want to be able to ignore but preserve leading gunk on the first
-    line, e.g. for
-    ( "blah\
-      \ blah"
-    , ...
-    )
+    line, e.g:
+      ( "blah\
+        \ blah"
+      , ...
+      )
+  - Also I could ignore non-indented leading lines, e.g.
+      variable =
+        "blah blah"
   - configurable indentation
   vim:
     - vim config uses variable for --wrapped

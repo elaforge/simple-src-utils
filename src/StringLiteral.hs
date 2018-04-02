@@ -78,8 +78,10 @@ process (wrapped, op, kind) = case (wrapped, op, kind) of
     (False, Just Remove,  Backslash) -> removeBackslash
     (True, Just Add, Backslash) -> addBackslashWrapped
     (True, Just Remove, Backslash) -> removeBackslashWrapped
-    (_, Just Add, Lines) -> addLines
-    (_, Just Remove, Lines) -> removeLines
+
+    (True, Just _, Lines) -> error "--wrapped not supported for lines yet"
+    (False, Just Add, Lines) -> addLines
+    (False, Just Remove, Lines) -> removeLines
 
 indentation :: Text
 indentation = "    "
