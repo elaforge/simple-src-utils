@@ -21,7 +21,27 @@ usage =
     \\n\
     \Convert between plain text and either backslash-continued string\n\
     \literals, or list of lines style strings.  This is to work around\n\
-    \haskell's lack of multi-line string literals.\n"
+    \haskell's lack of multi-line string literals.  Bind the toggle variant\n\
+    \to a vim key to switch between raw text and haskell string literal.\n\
+    \\n\
+    \It assumes a single level of indent for the strings, and leaves the\n\
+    \indent even in the raw form, so that the text will continue to fit in\n\
+    \more or less the same number of columns.  This means they will look\n\
+    \a bit short if printed literally on the terminal, but if you care about\n\
+    \that, use --wrapped mode and have some terminal-aware layer do the\n\
+    \wrapping.\n\
+    \\n\
+    \--wrapped mode assumes that someone else will be wrapping the text.\n\
+    \It doesn't put in newlines, and separates wrapped with a leading space.\n\
+    \A paragraph newline in the input becomes an explicit newline in the\n\
+    \haskell string.  Since it assumes someone else is wrapping, it won't\n\
+    \preserve your own leading spaces.  If you are doing explicit formatting\n\
+    \then don't use --wrapped.\n\
+    \\n\
+    \Standard CPP doesn't like Haskell string-gap syntax.  You can either use\n\
+    \cpphs via -pgmP 'cpphs --cpp', or use lines mode, which is more\n\
+    \cluttered but doesn't make CPP mad.  Presumably you have a unlines or\n\
+    \Text.unlines call at the front of the list.\n"
 
 main :: IO ()
 main = do
