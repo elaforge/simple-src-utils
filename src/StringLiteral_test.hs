@@ -9,7 +9,8 @@ import qualified StringLiteral
 
 main :: IO ()
 main = Tasty.defaultMain $ Tasty.testGroup "tests"
-    [ test_backslashWrapped
+    [ test_focusIndented
+    , test_backslashWrapped
     , test_backslashWrapped_roundTrip
     , test_backslash
     , test_backslash_roundTrip
@@ -20,32 +21,42 @@ main = Tasty.defaultMain $ Tasty.testGroup "tests"
 run :: Tasty.TestTree -> IO ()
 run = Tasty.defaultMain
 
+test_focusIndented :: Tasty.TestTree
+test_focusIndented = Tasty.testGroup "focusIndented"
+    [ ["x"] ==> ["    !x"]
+    , ["  x"] ==> ["    !x"]
+    , ["    x", "      y"] ==> ["    !x", "    !  y"]
+    ]
+    where
+    (==>) :: Stack.HasCallStack => [Text] -> [Text] -> Tasty.TestTree
+    (==>) = test (StringLiteral.focusIndented (map ("!"<>)))
+
 test_backslashWrapped :: Tasty.TestTree
 test_backslashWrapped = Tasty.testGroup "backslashWrapped"
-    [ ["    one line"] ==> ["    \"one line\""]
-    , ["    line\"with\\junk"] ==> ["    \"line\\\"with\\\\junk\""]
-    , ["    two", "    lines"] ==>
-        [ "    \"two\\"
-        , "    \\ lines\""
+    [ ["one line"] ==> ["\"one line\""]
+    , ["line\"with\\junk"] ==> ["\"line\\\"with\\\\junk\""]
+    , ["two", "lines"] ==>
+        [ "\"two\\"
+        , "\\ lines\""
         ]
     ,
-        [ "    with an"
-        , "    explicit"
+        [ "with an"
+        , "explicit"
         , ""
-        , "    newline"
+        , "newline"
         ] ==>
-        [ "    \"with an\\"
-        , "    \\ explicit\\"
-        , "    \\\\nnewline\""
+        [ "\"with an\\"
+        , "\\ explicit\\"
+        , "\\\\nnewline\""
         ]
     ,
-        [ "    with"
-        , "      explicit"
-        , "    indent"
+        [ "with"
+        , "  explicit"
+        , "indent"
         ] ==>
-        [ "    \"with\\"
-        , "    \\ explicit\\"
-        , "    \\ indent\""
+        [ "\"with\\"
+        , "\\ explicit\\"
+        , "\\ indent\""
         ]
     ]
     where
@@ -65,28 +76,28 @@ test_backslashWrapped_roundTrip =
 
 test_backslash :: Tasty.TestTree
 test_backslash = Tasty.testGroup "backslash"
-    [ ["    one line"] ==> ["    \"one line\\n\""]
-    , ["    line\"with\\junk"] ==> ["    \"line\\\"with\\\\junk\\n\""]
-    , ["    two", "    lines"] ==> ["    \"two\\n\\", "    \\lines\\n\""]
+    [ ["one line"] ==> ["\"one line\\n\""]
+    , ["line\"with\\junk"] ==> ["\"line\\\"with\\\\junk\\n\""]
+    , ["two", "lines"] ==> ["\"two\\n\\", "\\lines\\n\""]
     ,
-        [ "    with an"
-        , "    explicit"
+        [ "with an"
+        , "explicit"
         , ""
-        , "    newline"
+        , "newline"
         ] ==>
-        [ "    \"with an\\n\\"
-        , "    \\explicit\\n\\"
-        , "    \\\\n\\"
-        , "    \\newline\\n\""
+        [ "\"with an\\n\\"
+        , "\\explicit\\n\\"
+        , "\\\\n\\"
+        , "\\newline\\n\""
         ]
     ,
-        [ "    with"
-        , "      explicit"
-        , "    indent"
+        [ "with"
+        , "  explicit"
+        , "indent"
         ] ==>
-        [ "    \"with\\n\\"
-        , "    \\  explicit\\n\\"
-        , "    \\indent\\n\""
+        [ "\"with\\n\\"
+        , "\\  explicit\\n\\"
+        , "\\indent\\n\""
         ]
     ]
     where
@@ -101,33 +112,33 @@ test_backslash_roundTrip =
 
 test_lines :: Tasty.TestTree
 test_lines = Tasty.testGroup "lines"
-    [ ["    one line"] ==> ["    [\"one line\"]"]
-    , ["    two", "    lines"] ==>
-        [ "    [ \"two\""
-        , "    , \"lines\""
-        , "    ]"
+    [ ["one line"] ==> ["[\"one line\"]"]
+    , ["two", "lines"] ==>
+        [ "[ \"two\""
+        , ", \"lines\""
+        , "]"
         ]
     ,
-        [ "    with an"
-        , "    explicit"
+        [ "with an"
+        , "explicit"
         , ""
-        , "    newline"
+        , "newline"
         ] ==>
-        [ "    [ \"with an\""
-        , "    , \"explicit\""
-        , "    , \"\""
-        , "    , \"newline\""
-        , "    ]"
+        [ "[ \"with an\""
+        , ", \"explicit\""
+        , ", \"\""
+        , ", \"newline\""
+        , "]"
         ]
     ,
-        [ "    with"
-        , "      explicit"
-        , "    indent"
+        [ "with"
+        , "  explicit"
+        , "indent"
         ] ==>
-        [ "    [ \"with\""
-        , "    , \"  explicit\""
-        , "    , \"indent\""
-        , "    ]"
+        [ "[ \"with\""
+        , ", \"  explicit\""
+        , ", \"indent\""
+        , "]"
         ]
     ]
     where
@@ -142,22 +153,22 @@ test_lines_roundTrip =
 
 roundTripExamplesWrapped :: [[Text]]
 roundTripExamplesWrapped =
-    [ ["    one line"]
-    , ["    two", "    lines"]
-    , ["    line\"s", "    with\\junk"]
+    [ ["one line"]
+    , ["two", "lines"]
+    , ["line\"s", "with\\junk"]
     ,
-        [ "    with an"
-        , "    explicit"
+        [ "with an"
+        , "explicit"
         , ""
-        , "    newline"
+        , "newline"
         ]
     ]
 
 roundTripExamples :: [[Text]]
 roundTripExamples = roundTripExamplesWrapped ++
-    [   [ "    with"
-        , "      explicit"
-        , "    indent"
+    [   [ "with"
+        , "  explicit"
+        , "indent"
         ]
     ]
 

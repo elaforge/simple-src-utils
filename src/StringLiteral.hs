@@ -47,7 +47,8 @@ main :: IO ()
 main = do
     let showUsage = putStr usage >> Exit.exitFailure
     args <- maybe showUsage return . parseArgs =<< Environment.getArgs
-    Text.IO.interact $ Text.unlines . focusNonEmpty (process args) . Text.lines
+    Text.IO.interact $ Text.unlines
+        . focusIndented (focusNonEmpty (process args)) . Text.lines
 
 data Operation = Add | Remove deriving (Eq, Show)
 data Kind = Backslash | Lines deriving (Eq, Show)
@@ -86,17 +87,6 @@ process (wrapped, op, kind) = case (wrapped, op, kind) of
 indentation :: Text
 indentation = "    "
 
--- | Pass through leading and trailing blank lines.
-focusNonEmpty :: ([Text] -> [Text]) -> [Text] -> [Text]
-focusNonEmpty f lines = pre ++ f within ++ post
-    where (pre, within, post) = span2 (Text.null . Text.strip) lines
-
-span2 :: (a -> Bool) -> [a] -> ([a], [a], [a])
-span2 f xs = (pre, in2, post)
-    where
-    (pre, in1) = span f xs
-    (in2, post) = List.Extra.spanEnd f in1
-
 -- * backslashes
 
 inferBackslashed :: [Text] -> Bool
@@ -123,8 +113,8 @@ inferBackslashed (line:_) = "\"" `Text.isPrefixOf` Text.stripStart line
 -}
 addBackslashWrapped :: [Text] -> [Text]
 addBackslashWrapped =
-    indent . mapAround start middle end only . collectNewlines
-    . map quote . dedentAll
+    mapAround start middle end only . collectNewlines . map quote
+        . map Text.strip
     where
     start = surround "\"" "\\"
     middle = surround "\\" "\\" . leadingSpace
@@ -146,9 +136,9 @@ collectNewlines = filter (not . Text.null) . snd . List.mapAccumL collect 0
 -}
 removeBackslashWrapped :: [Text] -> [Text]
 removeBackslashWrapped =
-    indent . map unquote
+    map unquote
     . map stripLeadingSpace . zipPrev . concatMap addNewlines
-    . mapAround start middle end only . dedent
+    . mapAround start middle end only
     where
     addNewlines s =
         replicate (length pre) "" ++ [Text.intercalate "\\n" post]
@@ -163,16 +153,15 @@ removeBackslashWrapped =
         | otherwise = s
 
 addBackslash :: [Text] -> [Text]
-addBackslash = indent
-    . mapSurround ("\"", nl) ("\\", nl) ("\\", "\\n\"") ("\"", "\\n\"")
-    . map quote . dedent
+addBackslash =
+    mapSurround ("\"", nl) ("\\", nl) ("\\", "\\n\"") ("\"", "\\n\"")
+    . map quote
     where
     nl = "\\n\\"
 
 removeBackslash :: [Text] -> [Text]
-removeBackslash = indent . map unquote
+removeBackslash = map unquote
     . mapStrip ("\"", nl) ("\\", nl) ("\\", "\\n\"") ("\"", "\\n\"")
-    . dedent
     where
     nl = "\\n\\"
 
@@ -183,17 +172,17 @@ inferList [] = False
 inferList (line:_) = "[" `Text.isPrefixOf` Text.stripStart line
 
 addLines :: [Text] -> [Text]
-addLines = indent
-    . concatMap Text.lines -- handle the \n below
+addLines =
+    concatMap Text.lines -- handle the \n below
     . mapSurround ("[ \"", "\"") (", \"", "\"")
         (", \"", "\"\n]")
         ("[\"", "\"]")
-    . map quote . dedent
+    . map quote
 
 removeLines :: [Text] -> [Text]
-removeLines = indent . map unquote
+removeLines = map unquote
     . mapStrip ("[ \"", "\"") (", \"", "\"") (", \"", "\"") ("[\"", "\"]")
-    . dropLast . dedent
+    . dropLast
     where
     -- The last line should be ']'
     dropLast xs = case List.Extra.unsnoc xs of
@@ -202,6 +191,21 @@ removeLines = indent . map unquote
 
 
 -- * util
+
+-- | Pass through leading and trailing blank lines.
+focusNonEmpty :: ([Text] -> [Text]) -> [Text] -> [Text]
+focusNonEmpty f lines = pre ++ f within ++ post
+    where (pre, within, post) = span2 (Text.null . Text.strip) lines
+
+span2 :: (a -> Bool) -> [a] -> ([a], [a], [a])
+span2 f xs = (pre, in2, post)
+    where
+    (pre, in1) = span f xs
+    (in2, post) = List.Extra.spanEnd f in1
+
+-- | Operate on indented text as if it weren't indented.
+focusIndented :: ([Text] -> [Text]) -> [Text] -> [Text]
+focusIndented f = indent . f . dedent
 
 indent :: [Text] -> [Text]
 indent = map (\s -> if Text.null s then "" else indentation <> s)
@@ -214,9 +218,6 @@ dedent lines = map (Text.drop indentation) lines
         | otherwise = minimum $
             map (Text.length . Text.takeWhile Char.isSpace) $
             filter (not . Text.all Char.isSpace) lines
-
-dedentAll :: [Text] -> [Text]
-dedentAll = map (Text.dropWhile (==' ') . Text.stripEnd)
 
 quote :: Text -> Text
 quote = Text.replace "\"" "\\\"" . Text.replace "\\" "\\\\"
