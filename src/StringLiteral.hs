@@ -84,9 +84,6 @@ process (wrapped, op, kind) = case (wrapped, op, kind) of
     (False, Just Add, Lines) -> addLines
     (False, Just Remove, Lines) -> removeLines
 
-indentation :: Text
-indentation = "    "
-
 -- * backslashes
 
 inferBackslashed :: [Text] -> Bool
@@ -205,14 +202,11 @@ span2 f xs = (pre, in2, post)
 
 -- | Operate on indented text as if it weren't indented.
 focusIndented :: ([Text] -> [Text]) -> [Text] -> [Text]
-focusIndented f = indent . f . dedent
-
-indent :: [Text] -> [Text]
-indent = map (\s -> if Text.null s then "" else indentation <> s)
-
-dedent :: [Text] -> [Text]
-dedent lines = map (Text.drop indentation) lines
+focusIndented f lines = map indent . f . map (Text.drop indentation) $ lines
     where
+    indent line
+        | Text.null line = ""
+        | otherwise = Text.replicate indentation " " <> line
     indentation
         | null lines = 0
         | otherwise = minimum $

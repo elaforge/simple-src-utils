@@ -23,8 +23,8 @@ run = Tasty.defaultMain
 
 test_focusIndented :: Tasty.TestTree
 test_focusIndented = Tasty.testGroup "focusIndented"
-    [ ["x"] ==> ["    !x"]
-    , ["  x"] ==> ["    !x"]
+    [ ["x"] ==> ["!x"]
+    , ["  x"] ==> ["  !x"]
     , ["    x", "      y"] ==> ["    !x", "    !  y"]
     ]
     where

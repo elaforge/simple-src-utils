@@ -19,7 +19,8 @@ string-literal
   - Also I could ignore non-indented leading lines, e.g.
       variable =
         "blah blah"
-  - configurable indentation
+  * configurable indentation
+    . I retain existing indentation.
   vim:
     - vim config uses variable for --wrapped
     - What about variable indentation?
