@@ -1,8 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE PatternGuards #-}
 -- | Toggle between raw text and string literals.
 module StringLiteral where
-import qualified Data.Char as Char
 import qualified Data.List as List
 import qualified Data.List.Extra as List.Extra
 import Data.Monoid ((<>))
@@ -13,6 +13,8 @@ import qualified Data.Text.IO as Text.IO
 import GHC.Stack (HasCallStack)
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
+
+import qualified Util
 
 
 usage :: String
@@ -48,7 +50,7 @@ main = do
     let showUsage = putStr usage >> Exit.exitFailure
     args <- maybe showUsage return . parseArgs =<< Environment.getArgs
     Text.IO.interact $ Text.unlines
-        . focusIndented (focusNonEmpty (process args)) . Text.lines
+        . Util.focusIndented (Util.focusNonEmpty (process args)) . Text.lines
 
 data Operation = Add | Remove deriving (Eq, Show)
 data Kind = Backslash | Lines deriving (Eq, Show)
@@ -111,7 +113,7 @@ inferBackslashed (line:_) = "\"" `Text.isPrefixOf` Text.stripStart line
 addBackslashWrapped :: [Text] -> [Text]
 addBackslashWrapped =
     mapAround start middle end only . collectNewlines . map quote
-        . map Text.strip
+    . map Text.strip
     where
     start = surround "\"" "\\"
     middle = surround "\\" "\\" . leadingSpace
@@ -135,15 +137,11 @@ removeBackslashWrapped :: [Text] -> [Text]
 removeBackslashWrapped =
     map unquote
     . map stripLeadingSpace . zipPrev . concatMap addNewlines
-    . mapAround start middle end only
+    . mapStrip ("\"", "\\") ("\\", "\\") ("\\", "\"") ("\"", "\"")
     where
     addNewlines s =
         replicate (length pre) "" ++ [Text.intercalate "\\n" post]
         where (pre, post) = span Text.null $ Text.splitOn "\\n" s
-    start = strip "\"" "\\"
-    middle = strip "\\" "\\"
-    end = strip "\\" "\""
-    only = strip "\"" "\""
     stripLeadingSpace (Just "", s) = s
     stripLeadingSpace (_, s)
         | ' ' : c : _ <- Text.unpack s, c /= ' ' = Text.drop 1 s
@@ -188,30 +186,6 @@ removeLines = map unquote
 
 
 -- * util
-
--- | Pass through leading and trailing blank lines.
-focusNonEmpty :: ([Text] -> [Text]) -> [Text] -> [Text]
-focusNonEmpty f lines = pre ++ f within ++ post
-    where (pre, within, post) = span2 (Text.null . Text.strip) lines
-
-span2 :: (a -> Bool) -> [a] -> ([a], [a], [a])
-span2 f xs = (pre, in2, post)
-    where
-    (pre, in1) = span f xs
-    (in2, post) = List.Extra.spanEnd f in1
-
--- | Operate on indented text as if it weren't indented.
-focusIndented :: ([Text] -> [Text]) -> [Text] -> [Text]
-focusIndented f lines = map indent . f . map (Text.drop indentation) $ lines
-    where
-    indent line
-        | Text.null line = ""
-        | otherwise = Text.replicate indentation " " <> line
-    indentation
-        | null lines = 0
-        | otherwise = minimum $
-            map (Text.length . Text.takeWhile Char.isSpace) $
-            filter (not . Text.all Char.isSpace) lines
 
 quote :: Text -> Text
 quote = Text.replace "\"" "\\\"" . Text.replace "\\" "\\\\"

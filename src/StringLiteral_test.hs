@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 import Data.Text (Text)
 import qualified GHC.Stack as Stack
@@ -5,6 +6,7 @@ import qualified Test.Tasty as Tasty
 import qualified Test.Tasty.HUnit as HUnit
 
 import qualified StringLiteral
+import qualified Util
 
 
 main :: IO ()
@@ -29,7 +31,7 @@ test_focusIndented = Tasty.testGroup "focusIndented"
     ]
     where
     (==>) :: Stack.HasCallStack => [Text] -> [Text] -> Tasty.TestTree
-    (==>) = test (StringLiteral.focusIndented (map ("!"<>)))
+    (==>) = test (Util.focusIndented (map ("!"<>)))
 
 test_backslashWrapped :: Tasty.TestTree
 test_backslashWrapped = Tasty.testGroup "backslashWrapped"

@@ -25,8 +25,8 @@ source-repository head
     location: git://github.com/elaforge/simple-src-utils.git
 
 executable string-literal
-    main-is: src/StringLiteral.hs
-    extensions: OverloadedStrings
+    main-is: StringLiteral.hs
+    hs-source-dirs: src
     build-depends:
         base >= 3 && < 5,
         text,
@@ -39,7 +39,6 @@ test-suite test-string-literal
     main-is: StringLiteral_test.hs
     hs-source-dirs: src
     ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-type-defaults
-    extensions: OverloadedStrings
     build-depends:
         base >= 3 && < 5,
         text,
@@ -47,10 +46,22 @@ test-suite test-string-literal
         tasty, tasty-hunit
 
 executable cmt
-    main-is: src/Cmt.hs
-    extensions: OverloadedStrings
+    main-is: Cmt.hs
+    hs-source-dirs: src
     build-depends:
         base >= 3 && < 5,
-        text
+        text,
+        extra
     ghc-options:
         -main-is Cmt -Wall -fno-warn-name-shadowing
+
+test-suite test-cmt
+    type: exitcode-stdio-1.0
+    main-is: Cmt_test.hs
+    hs-source-dirs: src
+    ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-type-defaults
+    build-depends:
+        base >= 3 && < 5,
+        text,
+        extra,
+        tasty, tasty-hunit
