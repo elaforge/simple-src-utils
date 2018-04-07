@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified GHC.Stack as Stack
 import qualified Test.Tasty as Tasty

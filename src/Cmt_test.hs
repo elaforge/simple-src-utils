@@ -33,23 +33,3 @@ test_toggleCmt = Tasty.testGroup "toggleCmt"
 test :: (Stack.HasCallStack, Show a, Eq b, Show b) => (a -> b) -> a -> b
     -> Tasty.TestTree
 test f x expected = HUnit.testCase (take 70 $ show x) $ f x HUnit.@?= expected
-
--- * tests
-
-{-
-test_cmtOrUncmt = do
-    print $ ignoreBlankLines (const ["yohoho"]) " \n\n  hi\n \n \n\n"
-
-t0 = lineCmt "--" "  " "  hello"
-t1 = lineCmt "--" "  " "    "
-t2 = indentOf ["  ho", " hi"]
-
-tlines :: [Text]
-tlines = ["  ho", "", "  hi"]
-
-tcmt :: Text
-tcmt = "--"
-
-t3 = toggleCmt "--" tlines
-t4 = toggleCmt "--" ["  --hi", "-- there"]
--}

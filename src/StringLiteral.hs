@@ -3,6 +3,7 @@
 {-# LANGUAGE PatternGuards #-}
 -- | Toggle between raw text and string literals.
 module StringLiteral where
+import Data.Functor ((<$>))
 import qualified Data.List as List
 import qualified Data.List.Extra as List.Extra
 import Data.Monoid ((<>))
@@ -10,7 +11,6 @@ import qualified Data.Text as Text
 import Data.Text (Text)
 import qualified Data.Text.IO as Text.IO
 
-import GHC.Stack (HasCallStack)
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
 
@@ -222,19 +222,19 @@ mapStrip start middle end only =
 surround :: Text -> Text -> Text -> Text
 surround s e x = s <> x <> e
 
-strip :: HasCallStack => Text -> Text -> Text -> Text
+strip :: Text -> Text -> Text -> Text
 strip s e = stripPrefix s . stripSuffix e
 
 -- * generic util
 
 -- TODO these are mostly from Util.Seq, I should put that on hackage too
 
-stripSuffix :: HasCallStack => Text -> Text -> Text
+stripSuffix :: Text -> Text -> Text
 stripSuffix s text =
     maybe (error $ "expected suffix " <> show s <> " on " <> show text) id $
         Text.stripSuffix s text
 
-stripPrefix :: HasCallStack => Text -> Text -> Text
+stripPrefix :: Text -> Text -> Text
 stripPrefix s text =
     maybe (error $ "expected prefix " <> show s <> " on " <> show text) id $
         Text.stripPrefix s text

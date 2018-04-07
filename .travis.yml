@@ -24,42 +24,42 @@ before_cache:
 
 matrix:
   include:
-    - compiler: "ghc-7.8.4"
+    - compiler: "070804"
       env: GHC=7.8.4 CABALVER=2.0
       addons:
         apt:
           packages: [ghc-7.8.4, cabal-install-2.0]
           sources: [hvr-ghc]
 
-    - compiler: "ghc-7.10.3"
+    - compiler: "071003"
       env: GHC=7.10.3 CABALVER=2.0
       addons:
         apt:
           packages: [ghc-7.10.3, cabal-install-2.0]
           sources: [hvr-ghc]
 
-    - compiler: "ghc-8.0.2"
+    - compiler: "080002"
       env: GHC=8.0.2 CABALVER=2.0
       addons:
         apt:
           packages: [ghc-8.0.2, cabal-install-2.0]
           sources: [hvr-ghc]
 
-    - compiler: "ghc-8.2.2"
+    - compiler: "080202"
       env: GHC=8.2.2 CABALVER=2.0
       addons:
         apt:
           packages: [ghc-8.2.2, cabal-install-2.0]
           sources: [hvr-ghc]
 
-    - compiler: "ghc-8.4.1"
+    - compiler: "080401"
       env: GHC=8.4.1 CABALVER=2.2
       addons:
         apt:
           packages: [ghc-8.4.1, cabal-install-2.2]
           sources: [hvr-ghc]
 
-    - compiler: "ghc-HEAD"
+    - compiler: "999999"
       env: GHC=head CABALVER=head
       addons:
         apt:
@@ -79,11 +79,10 @@ install:
 
 script:
   # test that source-distributions can be generated
+  - cabal configure
   - cabal sdist
   - DISTDIR=$(mktemp -d /tmp/dist-test.XXXX)
   - cat dist/simple-src-utils-*.tar.gz | (cd "${DISTDIR}/" && tar -xzvf -)
   - cd ${DISTDIR}/simple-src-utils-*
-  # this builds all libraries and executables (without tests/benchmarks)
-  - cabal configure --enable-tests --disable-benchmarks
   - cabal build
-  - cabal test
+  - if [ $compiler -ge 080002 ]; then cabal test; fi

@@ -39,7 +39,7 @@ test-suite test-string-literal
     type: exitcode-stdio-1.0
     main-is: StringLiteral_test.hs
     hs-source-dirs: src
-    other-modules: Util
+    other-modules: Util, StringLiteral
     ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-type-defaults
     build-depends:
         base >= 3 && < 5,
@@ -62,7 +62,7 @@ test-suite test-cmt
     type: exitcode-stdio-1.0
     main-is: Cmt_test.hs
     hs-source-dirs: src
-    other-modules: Util
+    other-modules: Util, Cmt
     ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-type-defaults
     build-depends:
         base >= 3 && < 5,

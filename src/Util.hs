@@ -2,6 +2,7 @@
 module Util where
 import qualified Data.Char as Char
 import qualified Data.List.Extra as List.Extra
+import Data.Monoid ((<>))
 import qualified Data.Text as Text
 import Data.Text (Text)
 
