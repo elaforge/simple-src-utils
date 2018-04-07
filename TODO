@@ -10,6 +10,8 @@ string-literal
     . lines also adds 3+1, backslash wrapped adds 2 usually.
     . I could dedent by the added characters, but then I wind up with
       irregular indents.  Some people might not mind that, but I do.
+    . I can set vim tw-=4, but then I have to set it back when toggling back,
+      and vim doesn't know which direction I just went.
   - I might want to be able to ignore but preserve leading gunk on the first
     line, e.g:
       ( "blah\
@@ -27,8 +29,9 @@ string-literal
       . I can infer it easily enough when stripping, but I have to store what it
         was to go back.
       . Same problem as inferring the style.
-    - I can infer the style when going to raw, but then how to go back?
+    / I can infer the style when going to raw, but then how to go back?
       . I could set a vim variable.
+      . Actually I don't need this, since I keep the indent.
     - vip works for a single paragraph, but not if there are spaces inside,
       and not if there's a dedented 'variable = ...' header.  Is there some
       text object that selects everything at and below this indent level, and

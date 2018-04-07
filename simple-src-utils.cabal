@@ -27,6 +27,7 @@ source-repository head
 executable string-literal
     main-is: StringLiteral.hs
     hs-source-dirs: src
+    other-modules: Util
     build-depends:
         base >= 3 && < 5,
         text,
@@ -38,6 +39,7 @@ test-suite test-string-literal
     type: exitcode-stdio-1.0
     main-is: StringLiteral_test.hs
     hs-source-dirs: src
+    other-modules: Util
     ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-type-defaults
     build-depends:
         base >= 3 && < 5,
@@ -48,6 +50,7 @@ test-suite test-string-literal
 executable cmt
     main-is: Cmt.hs
     hs-source-dirs: src
+    other-modules: Util
     build-depends:
         base >= 3 && < 5,
         text,
@@ -59,6 +62,7 @@ test-suite test-cmt
     type: exitcode-stdio-1.0
     main-is: Cmt_test.hs
     hs-source-dirs: src
+    other-modules: Util
     ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-type-defaults
     build-depends:
         base >= 3 && < 5,
