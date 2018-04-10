@@ -69,3 +69,26 @@ test-suite test-cmt
         text,
         extra,
         tasty, tasty-hunit
+
+executable fmt-signature
+    main-is: FmtSignature.hs
+    hs-source-dirs: src
+    other-modules: Util
+    build-depends:
+        base >= 3 && < 5,
+        text,
+        extra
+    ghc-options:
+        -main-is FmtSignature -Wall -fno-warn-name-shadowing
+
+test-suite test-fmt-signature
+    type: exitcode-stdio-1.0
+    main-is: FmtSignature_test.hs
+    hs-source-dirs: src
+    other-modules: FmtSignature
+    ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-type-defaults
+    build-depends:
+        base >= 3 && < 5,
+        text,
+        extra,
+        tasty, tasty-hunit

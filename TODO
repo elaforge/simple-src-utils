@@ -1,3 +1,18 @@
+fmt-signature
+  . Bind to equalprg.
+  . Wrap before -> or =>
+  . Treat ()s as one word.
+  * basic implementation
+  * test
+  - ignore lines with comments
+    . Any line with a comment goes through unchanged.
+    . Break input into lines without comments and wrap each section
+      separately.  The only wrinkle is that only the first line of the first
+      section isn't indented.
+  - configure indentation
+  - can I get vim to expand the selection to the whole signature?
+
+
 string-literal
   * options with --
   * --wrapped adds leading space
