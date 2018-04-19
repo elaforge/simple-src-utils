@@ -9,7 +9,15 @@ fmt-signature
     . Break input into lines without comments and wrap each section
       separately.  The only wrinkle is that only the first line of the first
       section isn't indented.
+  - wrap inside ()s
+    . I want one indent per (, and to wrap at the lowest indent.
+    . This is what Util.Format does, so maybe I should try to extract and use
+      it.
+    . But it has bugs.  Or can I do a simpler one?  Or maybe the bugs are just
+      in Util.Format?
   - configure indentation
+  - format non-toplevel declarations
+    . I think I just need to preserve leading indent.
   - can I get vim to expand the selection to the whole signature?
 
 
@@ -33,6 +41,28 @@ string-literal
         \ blah"
       , ...
       )
+  - How can I support embedded operators?  E.g.
+    . "blah blah "
+      <> x <> "blah\
+      \ blah"
+      =>
+      blah blah
+      <> x <> blah
+      blah
+
+    . "blah" <> blah
+      <> "e..."
+    . For stripping, I can just not strip if it's not a \.  But once I strip,
+      it becomes ambiguous.
+    . I could try to make it non-ambiguous, by replacing quotes with some
+      magic symbol.
+    . Hm, I could even remember wrapped or not by using a different symbol.
+    . It should be typeable, because I want to write these inline:
+      . •blah blah
+        blah blah•
+        <> x <> •blah blah
+        blah•
+
   - Also I could ignore non-indented leading lines, e.g.
       variable =
         "blah blah"

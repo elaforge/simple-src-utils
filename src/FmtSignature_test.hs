@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
-import Data.Monoid ((<>))
 import qualified GHC.Stack as Stack
 import qualified Test.Tasty as Tasty
 import qualified Test.Tasty.HUnit as HUnit
@@ -9,8 +8,8 @@ import qualified FmtSignature
 
 
 main :: IO ()
-main = Tasty.defaultMain $ Tasty.testGroup "tests"
-    [ test_fmt
+main = run $ Tasty.testGroup "tests"
+    [ test_fmt, test_wrap
     ]
 
 run :: Tasty.TestTree -> IO ()
@@ -19,15 +18,25 @@ run = Tasty.defaultMain
 test_fmt :: Tasty.TestTree
 test_fmt = Tasty.testGroup "fmt"
     [ "a -> b" ==> Just "a -> b"
-    , "aaa -> bbb -> ccc" ==> Just "aaa -> bbb\n____-> ccc"
-    , "aaa -> () -> bbb" ==> Just "aaa -> ()\n____-> bbb"
-    , "a -> b -> c -> d" ==> Just "a -> b\n____-> c\n____-> d"
-    -- , "a -> b -> c -> d"
+    , "abc1234567890 -> a" ==> Just "abc1234567890\n    -> a"
+    , "aaa -> bbb -> ccc" ==> Just "aaa -> bbb\n    -> ccc"
+    , "aaa -> () -> bbb" ==> Just "aaa -> ()\n    -> bbb"
+    , "a -> b -> c -> d" ==> Just "a -> b -> c\n    -> d"
+    -- ()s don't break
+    , "a -> (b -> c) -> d" ==> Just "a\n    -> (b -> c)\n    -> d"
     ]
     where
-    f = FmtSignature.fmt "____" 12
+    f = FmtSignature.fmt 12
     (==>) :: Stack.HasCallStack => String -> Maybe String -> Tasty.TestTree
     (==>) = test f
+
+test_wrap :: Tasty.TestTree
+test_wrap = Tasty.testGroup "wrap"
+    [ ["aaa", "-> bbb", "-> ccc"] ==> ["aaa -> bbb", "    -> ccc"]
+    ]
+    where
+    (==>) :: Stack.HasCallStack => [String] -> [String] -> Tasty.TestTree
+    (==>) = test (FmtSignature.wrap 12)
 
 test :: (Stack.HasCallStack, Show a, Eq b, Show b) => (a -> b) -> a -> b
     -> Tasty.TestTree

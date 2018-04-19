@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternGuards #-}
+-- | Format type signature declarations.
 module FmtSignature where
 import Control.Applicative ((<|>))
 import qualified Control.Arrow as Arrow
@@ -22,34 +24,14 @@ main = do
     args <- System.Environment.getArgs
     case args of
         [width] | Just width <- Read.readMaybe width ->
-            interact $ \s -> maybe s id (fmt indent width s)
+            interact $ \s -> maybe s id (fmt width s)
         _ -> IO.hPutStrLn IO.stderr usage >> System.Exit.exitFailure
 
-Just t0 = parse "a -> b"
-Just t1 = parse "a => (bb->c)"
+indentSpaces :: Int
+indentSpaces = 4
 
-indent :: String
-indent = "    "
-
-{-
-forall y z. X y => A -> IO z
-
-(a -> b) -> c
-
-leave lines with comments on them alone.  What about
-a -> (b -- hi
--> c)
-
--}
-
-fmt :: String -> Int -> String -> Maybe String
-fmt indent width =
-    fmap (List.intercalate "\n" . indented . wrap (width - length indent)
-        . toWords)
-    . parse
-    where
-    indented (x : xs) = x : map (indent++) xs
-    indented [] = []
+fmt :: Int -> String -> Maybe String
+fmt width = fmap (List.intercalate "\n" . wrap width . toWords) . parse
 
 toWords :: [Parsed] -> [String]
 toWords = map (strip . concat) . splitWith (`elem` ["->", "=>"]) . map unparse
@@ -59,13 +41,26 @@ toWords = map (strip . concat) . splitWith (`elem` ["->", "=>"]) . map unparse
 -- In fact, this is basically just Util.Format, so I should use that, after
 -- I extract it.
 wrap :: Int -> [String] -> [String]
-wrap width = map unwords . split
+wrap width = mapTail (indent<>) . go (width : repeat (width - indentSpaces))
     where
-    split words
-        | null words = []
-        | null pre = take 1 post : split (drop 1 post)
-        | otherwise = pre : split post
-        where (pre, post) = breakAccum (>width) accum (-1) words
+    indent = replicate indentSpaces ' '
+    go (width : widths) words
+        | null pre = []
+        | otherwise = unwords pre : go widths post
+        where (pre, post) = wrap1 width words
+    go [] _ = [] -- unreachable, widths is infinite
+
+mapTail :: (a -> a) -> [a] -> [a]
+mapTail f (x : xs) = x : map f xs
+mapTail _ [] = []
+
+wrap1 :: Int -> [String] -> ([String], [String])
+wrap1 width words
+    | null words = ([], [])
+    | null pre = (take 1 post, drop 1 post)
+    | otherwise = (pre, post)
+    where
+    (pre, post) = breakAccum (>width) accum (-1) words
     accum w word = w + 1 + length word
 
 -- * parse

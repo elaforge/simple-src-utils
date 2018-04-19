@@ -22,8 +22,7 @@ usage =
     "string-literal [ --wrapped --{add,remove,toggle}-{backslash,lines} ]\n\
     \\n\
     \Convert between plain text and either backslash-continued string\n\
-    \literals, or list of lines style strings.  This is to work around\n\
-    \haskell's lack of multi-line string literals.  Bind the toggle variant\n\
+    \literals, or list of lines style strings.  Bind the toggle variant\n\
     \to a vim key to switch between raw text and haskell string literal.\n\
     \\n\
     \It assumes a single level of indent for the strings, and leaves the\n\
@@ -40,8 +39,8 @@ usage =
     \preserve your own leading spaces.  If you are doing explicit formatting\n\
     \then don't use --wrapped.\n\
     \\n\
-    \Standard CPP doesn't like Haskell string-gap syntax.  You can either use\n\
-    \cpphs via -pgmP 'cpphs --cpp', or use lines mode, which is more\n\
+    \Standard CPP doesn't like Haskell string-gap syntax.  You can either\n\
+    \use cpphs via -pgmP 'cpphs --cpp', or use lines mode, which is more\n\
     \cluttered but doesn't make CPP mad.  Presumably you have a unlines or\n\
     \Text.unlines call at the front of the list.\n"
 
