@@ -2,10 +2,13 @@
 {-# LANGUAGE PatternGuards #-}
 -- | Format type signature declarations.
 module FmtSignature where
-import Control.Applicative ((<|>))
+import Control.Applicative ((<|>), (<*), (*>))
 import qualified Control.Arrow as Arrow
 import qualified Data.Char as Char
+import Data.Functor ((<$>))
 import qualified Data.List as List
+import Data.Monoid ((<>))
+
 import qualified System.Environment
 import qualified System.Exit
 import qualified System.IO as IO
