@@ -20,21 +20,29 @@ import qualified Text.Read as Read
 
 
 usage :: String
-usage = "fmt-signature width"
+usage = "fmt-signature indent-spaces width"
 
 main :: IO ()
 main = do
     args <- System.Environment.getArgs
     case args of
-        [width] | Just width <- Read.readMaybe width ->
-            interact $ \s -> maybe s id (fmt width s)
+        [indent, width]
+            | Just indent <- Read.readMaybe indent
+            , Just width <- Read.readMaybe width ->
+                let config = Config
+                        { _indent = indent
+                        , _width = width
+                        }
+                in interact $ \s -> maybe s id (fmt config s)
         _ -> IO.hPutStrLn IO.stderr usage >> System.Exit.exitFailure
 
-indentSpaces :: Int
-indentSpaces = 4
+data Config = Config {
+    _indent :: !Int
+    , _width :: !Int
+    } deriving (Show)
 
-fmt :: Int -> String -> Maybe String
-fmt width = fmap (List.intercalate "\n" . wrap width . toWords) . parse
+fmt :: Config -> String -> Maybe String
+fmt config = fmap (List.intercalate "\n" . wrap config . toWords) . parse
 
 toWords :: [Parsed] -> [String]
 toWords = map (strip . concat) . splitWith (`elem` ["->", "=>"]) . map unparse
@@ -43,15 +51,17 @@ toWords = map (strip . concat) . splitWith (`elem` ["->", "=>"]) . map unparse
 -- I should wrap in there if necessary, but with an extra indent.
 -- In fact, this is basically just Util.Format, so I should use that, after
 -- I extract it.
-wrap :: Int -> [String] -> [String]
-wrap width = mapTail (indent<>) . go (width : repeat (width - indentSpaces))
+wrap :: Config -> [String] -> [String]
+wrap config =
+    mapTail (indent<>) . go (width : repeat (width - _indent config))
     where
-    indent = replicate indentSpaces ' '
+    indent = replicate (_indent config) ' '
     go (width : widths) words
         | null pre = []
         | otherwise = unwords pre : go widths post
         where (pre, post) = wrap1 width words
     go [] _ = [] -- unreachable, widths is infinite
+    width = _width config
 
 mapTail :: (a -> a) -> [a] -> [a]
 mapTail f (x : xs) = x : map f xs
