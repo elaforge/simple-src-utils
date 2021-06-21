@@ -26,9 +26,8 @@ test_fmt = Tasty.testGroup "fmt"
     , "a -> (b -> c) -> d" ==> Just "a\n    -> (b -> c)\n    -> d"
     ]
     where
-    f = FmtSignature.fmt 12
     (==>) :: Stack.HasCallStack => String -> Maybe String -> Tasty.TestTree
-    (==>) = test f
+    (==>) = test (FmtSignature.fmt config)
 
 test_wrap :: Tasty.TestTree
 test_wrap = Tasty.testGroup "wrap"
@@ -36,7 +35,10 @@ test_wrap = Tasty.testGroup "wrap"
     ]
     where
     (==>) :: Stack.HasCallStack => [String] -> [String] -> Tasty.TestTree
-    (==>) = test (FmtSignature.wrap 12)
+    (==>) = test (FmtSignature.wrap config)
+
+config :: FmtSignature.Config
+config = FmtSignature.Config 4 12
 
 test :: (Stack.HasCallStack, Show a, Eq b, Show b) => (a -> b) -> a -> b
     -> Tasty.TestTree
